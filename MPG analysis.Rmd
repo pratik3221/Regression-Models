@@ -1,0 +1,118 @@
+---
+title: "Motor MPG Analysis"
+author: "Pratik Patil"
+date: "04/11/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#### Report Summary
+
+The aim of this reoprt is to analyze the relation bewteen the transmission type of the vehicle(automatic or manual)and the distance(in miles) it covers per gallon(mpg).
+The final result aims at determining which transmission type gives more miles per gallon rating.
+The `mtcars` dataset is used to make the analysis.
+
+#### Load Data
+Load the dataset and convert categorical variables to factors.
+```{r results='hide', message=FALSE}
+library(ggplot2)
+data(mtcars)
+head(mtcars, n=3)
+dim(mtcars)
+mtcars$cyl <- as.factor(mtcars$cyl)
+mtcars$vs <- as.factor(mtcars$vs)
+mtcars$am <- factor(mtcars$am)
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+attach(mtcars)
+```
+
+#### Exploratory Analysis
+**See Appendix Figure I**The graph leads us to believe that there is a significant 
+increase in MPG when for vehicles with a manual transmission vs automatic.
+
+##### Statistical Inference
+T-Test transmission type and MPG
+```{r}
+testResults <- t.test(mpg ~ am)
+testResults$p.value
+```
+The T-Test rejects the null hypothesis that the difference between transmission
+types is 0.  
+```{r}
+testResults$estimate
+```
+The difference estimate between the 2 transmissions is 7.24494 MPG in favor of 
+manual.
+
+##### Regression Analysis
+Fit the full model of the data
+```{r results='hide'}
+fullModelFit <- lm(mpg ~ ., data = mtcars)
+summary(fullModelFit)  # results hidden
+summary(fullModelFit)$coeff  # results hidden
+```
+Since none of the coefficients have a p-value less than 0.05 we cannot conclude
+which variables are more statistically significant. 
+
+Backward selection to determine which variables are most statistically 
+significant
+```{r results='hide'}
+stepFit <- step(fullModelFit)
+summary(stepFit) # results hidden
+summary(stepFit)$coeff # results hidden
+```
+
+The new model has 4 variables (cylinders, horsepower, weight, transmission). The
+R-squared value of 0.8659 confirms that this model explains about 87% of the 
+variance in MPG. The p-values also are statistically significantly because they
+have a p-value less than 0.05. The coefficients conclude that increasing the 
+number of cylinders from 4 to 6 with decrease the MPG by 3.03.  Further 
+increasing the cylinders to 8 with decrease the MPG by 2.16.  Increasing the 
+horsepower is decreases MPG 3.21 for every 100 horsepower.  Weight decreases the
+MPG by 2.5 for each 1000 lbs increase. A Manual transmission improves the MPG by
+1.81.
+
+#### Residuals & Diagnostics
+Residual Plot
+**See Appendix Figure II**
+
+The plots conclude:
+
+A: The randomness supports the assumption of independence  
+B: The distribution of residuals is normal  
+C: Confirms the constant variance assumption  
+D: Since all points are under 0.05, there are no outliers
+```{r}
+sum((abs(dfbetas(stepFit)))>1)
+```
+
+#### Results
+
+The analysis performed shows that the vehicles with manual transmission have a higher MPG rating than vehicles with automatic transmission by 7.245.
+When fitted with multiple linear regressions, the results went on to show that the transmission type had less to do with the earlier results, that is, the manual transmission itself contributed less to MPG, still giving it an edge over automatic transmission, but by 1.81 MPG. Other variables like it's enigne capacity(horsepower), it's weight and number of cylinders had a greater effect on the MPG of vehicles.  
+
+#### Conclusion
+
+There is a difference in MPG based on transmission type.  
+
+#### Appendix Figures
+
+#### I
+Exploratory Box graph that compares Automatic and Manual 
+transmission MPG.  
+```{r echo=FALSE}
+  boxplot(mpg ~ am, 
+          xlab="Type if Transmission (0 = Automatic, 1 = Manual)", 
+          ylab="mpg",
+          main="MPG by  Vehicle Transmission Type")
+```
+
+#### II
+```{r echo=FALSE}
+par(mfrow = c(2, 2))
+plot(stepFit)
+```
